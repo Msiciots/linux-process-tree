@@ -1,9 +1,9 @@
 #include "simple_pstree.h"
+
 int main(int argc,char* argv[])
 {
     sock_fd = socket(PF_NETLINK, SOCK_RAW, NETLINK_protocol);
-    if(sock_fd<0)
-    {
+    if(sock_fd<0) {
         printf("socket fial\n");
         return -1;
     }

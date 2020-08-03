@@ -1,21 +1,23 @@
 #include "ksimple_pstree.h"
+
+static pid_t ppid;
+
+module_param(ppid,int,0644);
 void itos(int pid)
 {
     int i=0;
-    do
-    {
+    do {
         tmp[i]=pid%10-0+'0';
         pid=pid/10;
         i++;
-    }
-    while(pid>0);
+    } while(pid>0);
     tmp[i]='\0';
     int j;
     i--;
-    for(j=0; tmp[j]!='\0'; j++,i--)
-    {
+    for(j=0; tmp[j]!='\0'; j++,i--) {
         i2s[j]=tmp[i];
     }
+    i2s[j]='\0';
 }
 char * strcat(char *dest, const char *src)
 {
@@ -37,12 +39,13 @@ static void child(struct task_struct *p,int d)
 
     strcat(msg,p->comm);
     strcat(msg,"(");
+    printk("p-pid:%d\n",p->pid);
     itos(p->pid);
+    printk("i2s:%s\n",i2s);
     strcat(msg,i2s);
     strcat(msg,")\n");
 
-    list_for_each(list, &p->children)
-    {
+    list_for_each(list, &p->children) {
         psibling = list_entry(list, struct task_struct, sibling);
         child(psibling,d+1);
     }
@@ -59,8 +62,7 @@ static void trace_parent(void)
     // strcat(msg,i2s);
     strcat(msg,"1");
     strcat(msg,")\n");
-    for(i=0; i<top_id; i++)
-    {
+    for(i=0; i<top_id; i++) {
         pid=parent_id[i];
         p = pid_task(find_vpid(pid), PIDTYPE_PID);
         int j=0;
@@ -109,19 +111,14 @@ static void nl_recv_msg(struct sk_buff *skb)
     strcpy(rec_msg,nlmsg_data(nlh));
     printk("rec_msg:%s\n",rec_msg);
 
-    if(rec_msg[1]=='c')
-    {
-        if(rec_msg[2]=='\0')
-        {
+    if(rec_msg[1]=='c') {
+        if(rec_msg[2]=='\0') {
             ppid=1;
             p = pid_task(find_vpid(ppid), PIDTYPE_PID);
             child(p,0);
-        }
-        else
-        {
+        } else {
             int i=2,ppid=0;
-            while(rec_msg[i]!='\0')
-            {
+            while(rec_msg[i]!='\0') {
                 ppid*=10;
                 ppid+=rec_msg[i]-'0';
                 i++;
@@ -129,16 +126,12 @@ static void nl_recv_msg(struct sk_buff *skb)
             p = pid_task(find_vpid(ppid), PIDTYPE_PID);
             child(p,0);
         }
-    }
-    else if(rec_msg[1]=='s')
-    {
+    } else if(rec_msg[1]=='s') {
         if(rec_msg[2]=='\0')
         {}
-        else
-        {
+        else {
             int i=2,ppid=0;
-            while(rec_msg[i]!='\0')
-            {
+            while(rec_msg[i]!='\0') {
                 ppid*=10;
                 ppid+=rec_msg[i]-'0';
                 i++;
@@ -146,8 +139,7 @@ static void nl_recv_msg(struct sk_buff *skb)
 
             p = pid_task(find_vpid(ppid), PIDTYPE_PID);
 
-            list_for_each(list, &p->parent->children)
-            {
+            list_for_each(list, &p->parent->children) {
                 psibling = list_entry(list, struct task_struct, sibling);
                 strcat(msg,psibling->comm);
                 strcat(msg,"(");
@@ -156,21 +148,15 @@ static void nl_recv_msg(struct sk_buff *skb)
                 strcat(msg,")\n");
             }
         }
-    }
-    else if(rec_msg[1]=='p')
-    {
-        if(rec_msg[2]=='\0')
-        {
+    } else if(rec_msg[1]=='p') {
+        if(rec_msg[2]=='\0') {
             ppid=pid;
             p = pid_task(find_vpid(ppid), PIDTYPE_PID);
             find_parent(p);
             trace_parent();
-        }
-        else
-        {
+        } else {
             int i=2,ppid=0;
-            while(rec_msg[i]!='\0')
-            {
+            while(rec_msg[i]!='\0') {
                 ppid*=10;
                 ppid+=rec_msg[i]-'0';
                 i++;
@@ -184,8 +170,7 @@ static void nl_recv_msg(struct sk_buff *skb)
     printk("%s\n",msg);
     msg_size = strlen(msg);
     skb_out = nlmsg_new(msg_size, 0);
-    if (!skb_out)
-    {
+    if (!skb_out) {
         printk(KERN_ERR "Failed to allocate new skb\n");
         return;
     }
@@ -202,14 +187,12 @@ static void nl_recv_msg(struct sk_buff *skb)
 static int __init start_init(void)
 {
     printk("Entering: %s\n", __FUNCTION__);
-    struct netlink_kernel_cfg cfg =
-    {
+    struct netlink_kernel_cfg cfg = {
         .input = nl_recv_msg,
     };
 
     nl_sk = netlink_kernel_create(&init_net, NETLINK_protocol, &cfg);
-    if (!nl_sk)
-    {
+    if (!nl_sk) {
         printk(KERN_ALERT "Error creating socket.\n");
         return -10;
     }
