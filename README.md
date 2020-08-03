@@ -6,12 +6,12 @@ Figure 1. shows the communication between user and kernel processes.
 2. ksimple_pstree packages the tree of processes into a message and sends it to simple_pstree via the socket.
 3. simple_pstree displays the received message.
 <center>
-<img src="https://github.com/Msiciots/linux-process-tree/raw/master/img/process.png" width="50%">
+<img src="https://github.com/Msiciots/linux-process-tree/raw/master/img/process.png" width="25%">
 </center>
 <center>Figure 1. The processes communication</center>
 
 <center>
-<img src="https://github.com/Msiciots/linux-process-tree/raw/master/img/Execution_Ex1.png" width="80%">
+<img src="https://github.com/Msiciots/linux-process-tree/raw/master/img/Execution_Ex1.png" width="50%">
 </center>
 <center>Figure 2. An example for executions</center>
 
